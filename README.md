@@ -42,16 +42,16 @@ Version finale : Désormais, nous avons trois piliers distincts : le client (Lea
 **Modèle Conceptuel de Données (Version initiale)** 
 ![Modèle Conceptuel de Données - Version initiale](./assets/neo-mcd-initiale.png.png)  
  
-**Modèle Conceptuel de Données (Version finale)** ![Modèle Conceptuel de Données - Version finale](assets/neo-mcd-finale.png) 
+**Modèle Conceptuel de Données (Version finale)** ![Modèle Conceptuel de Données - Version finale](./assets/neo-mcd-finale.png.png) 
  
 2. Modèles logique des Données (MLD)
 Dans la première version de notre MLD on avait une table LEAD qui portait beaucoup trop d'informations en même temps, et des tables comme LOGS_AGENT ou MATRICE_TARIFAIRE qui alourdissent inutilement la base.
 Dans la version finale du MLD , on a isolé les données du trajet dans une table dédiée : Trip. Concrètement, on a désormais trois entités bien distinctes (Lead, Trip, Quote) liées entre elles par des clés étrangères. Par exemple, si un client veut modifier sa ville de départ ou le nombre de passagers, on n'a plus besoin de toucher à sa fiche contact (le Lead) : on modifie uniquement son trajet (le Trip). Cela évite les erreurs de saisie et rend la gestion de notre base sur Supabase nettement plus fluide au quotidien
  
 **Modèle Logique de Données (Version initiale)**
-![Modèle Logique de Données - Version initiale](assets/neo-mld-initiale.png) 
+![Modèle Logique de Données - Version initiale](./assets/neo-mld-initiale.png.png) 
  
-**Modèle Logique de Données (Version finale)** ![Modèle Logique de Données - Version finale](assets/neo-mld-finale.png) 
+**Modèle Logique de Données (Version finale)** ![Modèle Logique de Données - Version finale](./assets/neo-mld-finale.png.png) 
  
  
 3. Diagramme de séquence 
@@ -65,10 +65,10 @@ Une meilleure gestion des données : Dans le premier schéma, tout était enregi
  
  
 **Diagramme de séquence — Version initiale du flux de données** 
-![Diagramme de séquence - Version initiale](assets/neo-diag-flux-donnees.png) 
+![Diagramme de séquence - Version initiale](./assets/neo-diag-flux-donnees.png.png) 
  
 **Diagramme de séquence — Architecture technique (Version finale)** 
-![Diagramme de séquence - Architecture technique](assets/neo-diag-architecture.png) 
+![Diagramme de séquence - Architecture technique](./assets/neo-diag-architecture.png.png) 
  
 # Stack technique
  
