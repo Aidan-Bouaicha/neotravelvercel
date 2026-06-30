@@ -6,7 +6,6 @@ export class MailService {
     to: string,
     quoteNumber: string
   ): Promise<void> {
-
     console.log("===== MAIL SERVICE =====");
     console.log("MAIL_USER :", process.env.MAIL_USER);
     console.log(
@@ -15,10 +14,15 @@ export class MailService {
     );
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -29,20 +33,18 @@ export class MailService {
     );
 
     await transporter.sendMail({
-      from: process.env.MAIL_USER,
+      from: `"NeoTravel" <${process.env.MAIL_USER}>`,
       to,
 
       subject: `Votre devis NeoTravel - ${quoteNumber}`,
 
-      text: `
-Bonjour,
+      text: `Bonjour,
 
 Veuillez trouver ci-joint votre devis NeoTravel.
 
 Merci pour votre confiance.
 
-L'équipe NeoTravel
-`,
+L'équipe NeoTravel`,
 
       attachments: [
         {
