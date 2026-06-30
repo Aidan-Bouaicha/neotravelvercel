@@ -1,33 +1,20 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import fs from "fs";
 import path from "path";
-import dns from "dns";
 
-dns.setDefaultResultOrder("ipv4first");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class MailService {
   static async sendQuoteEmail(
     to: string,
     quoteNumber: string
   ): Promise<void> {
-    console.log("===== MAIL SERVICE =====");
-    console.log("MAIL_USER :", process.env.MAIL_USER);
-    console.log(
-      "MAIL_PASS :",
-      process.env.MAIL_PASS ? "OK" : "MANQUANT"
-    );
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+    console.log("===== RESEND =====");
+
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY manquante");
+    }
 
     const pdfPath = path.join(
       process.cwd(),
@@ -35,10 +22,14 @@ export class MailService {
       `${quoteNumber}.pdf`
     );
 
-    await transporter.sendMail({
-      from: `"NeoTravel" <${process.env.MAIL_USER}>`,
-      to,
+    const pdfBuffer = fs.readFileSync(pdfPath);
+
+    const { data, error } = await resend.emails.send({
+      from: "NeoTravel <onboarding@resend.dev>",
+      to: [to],
+
       subject: `Votre devis NeoTravel - ${quoteNumber}`,
+
       text: `Bonjour,
 
 Veuillez trouver ci-joint votre devis NeoTravel.
@@ -46,14 +37,21 @@ Veuillez trouver ci-joint votre devis NeoTravel.
 Merci pour votre confiance.
 
 L'équipe NeoTravel`,
+
       attachments: [
         {
           filename: `${quoteNumber}.pdf`,
-          path: pdfPath,
+          content: pdfBuffer,
         },
       ],
     });
 
-    console.log("✅ Email envoyé avec succès !");
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    console.log("✅ Email envoyé !");
+    console.log(data);
   }
 }
