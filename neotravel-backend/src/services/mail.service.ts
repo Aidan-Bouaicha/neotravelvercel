@@ -1,5 +1,8 @@
 import nodemailer from "nodemailer";
 import path from "path";
+import dns from "dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 export class MailService {
   static async sendQuoteEmail(
@@ -35,9 +38,7 @@ export class MailService {
     await transporter.sendMail({
       from: `"NeoTravel" <${process.env.MAIL_USER}>`,
       to,
-
       subject: `Votre devis NeoTravel - ${quoteNumber}`,
-
       text: `Bonjour,
 
 Veuillez trouver ci-joint votre devis NeoTravel.
@@ -45,7 +46,6 @@ Veuillez trouver ci-joint votre devis NeoTravel.
 Merci pour votre confiance.
 
 L'équipe NeoTravel`,
-
       attachments: [
         {
           filename: `${quoteNumber}.pdf`,
