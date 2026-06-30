@@ -2,8 +2,6 @@ import { Resend } from "resend";
 import fs from "fs";
 import path from "path";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export class MailService {
   static async sendQuoteEmail(
     to: string,
@@ -13,8 +11,10 @@ export class MailService {
     console.log("===== RESEND =====");
 
     if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY manquante");
+      throw new Error("RESEND_API_KEY manquante dans le fichier .env");
     }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const pdfPath = path.join(
       process.cwd(),
@@ -47,7 +47,7 @@ L'équipe NeoTravel`,
     });
 
     if (error) {
-      console.error(error);
+      console.error("Erreur Resend :", error);
       throw error;
     }
 

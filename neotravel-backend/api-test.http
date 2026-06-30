@@ -116,3 +116,38 @@ Content-Type: application/json
 
 ### Test OpenRouteService
 GET http://localhost:3000/api/test-distance?depart=Paris&arrivee=Lyon
+
+### ==========================================
+### Connexion Admin - Succès
+### ==========================================
+
+POST http://localhost:3001/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@neotravel.fr",
+  "password": "NeoTravel2026!"
+}
+
+###
+
+### ==========================================
+### Connexion Admin - Échec
+### ==========================================
+
+POST http://localhost:3001/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@neotravel.fr",
+  "password": "mauvaispassword"
+}
+
+### ==========================================
+### Liste des devis
+### ==========================================
+
+GET http://localhost:3001/api/admin/quotes
+
+### Supprimer un devis
+DELETE http://localhost:3001/api/admin/quotes/87e0631b-33b2-493e-825c-ed065467b72b
