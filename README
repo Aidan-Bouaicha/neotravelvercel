@@ -1,141 +1,115 @@
 # NeoTravel — Résumé complet du projet
-
+ 
 > Projet réalisé dans le cadre du Master Développement d'Applications.
 >
 > Objectif : développer une plateforme permettant à un client de demander un devis de voyage en autocar assisté par une intelligence artificielle.
-
+ 
 —
-
-
+ 
+ 
 # Architecture du projet
-
-e projet est construit autour d'une architecture moderne de type BFF (Backend For Frontend) composée de deux applications distinctes : 
-
+ 
+le projet est construit autour d'une architecture moderne de type BFF (Backend For Frontend) composée de deux applications distinctes : 
+ 
 ```
 NeoTravel
 ├── neotravel-frontend (Next.js 15 / React / TailwindCSS)
 │   └── Serveur BFF : Gestion du Chatbot IA (Vercel AI SDK)
 └── neotravel-backend (Express / TypeScript)
     └── Moteur Métier : Calculs, PDF, Mails (Resend), Supabase
-
+ 
 ```
 - Le frontend et son API de chat sont déployés sur **Vercel**. 
 - Le backend métier est déployé sur **Render**. 
 - La base de données relationnelle est hébergée sur **Supabase**. 
-
+ 
 --- 
-
-
+ 
+ 
 # Conception & Modélisation
-
+ 
 Au cours du développement, nous avons fait évoluer notre organisation graphique et conceptuelle pour rendre l'application plus souple, plus précise et parfaitement adaptée à notre base de données Supabase.
-
+ 
 1. Modèles Conceptuels des Données (MCD)
 L'évolution de notre structure :
-
+ 
 Version initiale : L'approche initiale regroupait les informations de contact et les détails du trajet au sein d'une seule entité (le Lead). Nous avons donc choisi d’isoler  les besoins de trajet dans une entité dédiée : le Trip.
-
-
+ 
+ 
 Version finale : Désormais, nous avons trois piliers distincts : le client (Lead), son projet de voyage (Trip) et le devis final (Quote). Ce changement aligne notre base sur le fonctionnement réel de l'application : par exemple, cela permet à un même client de formuler plusieurs demandes de voyages sans dupliquer ses informations personnelles. Cette structure rend la base de données beaucoup plus flexible, robuste et conforme aux principes de normalisation des données.
-
+ 
                                   
-                                              Modèle Conceptuel de données 
-                                                      (Version intiale ) 
-                                                 NEO- MCD(version initiale).png 
-
-![Modèle Conceptuel de données (Version initiale)](../NEO-MCD%20(version%20Initiale).png)
-
-                                 
-                                        Modèle conceptuel de données 
-                                                     ( Version finale )
-                                                 NEO- MCD(version finale).png 
-
-![Modèle Conceptuel de données (Version finale)](../NEO-MCD%20(version%20Finale%20).png)
-
+**Modèle Conceptuel de Données (Version initiale)** 
+![Modèle Conceptuel de Données - Version initiale](assets/neo-mcd-initiale.png) 
+ 
+**Modèle Conceptuel de Données (Version finale)** ![Modèle Conceptuel de Données - Version finale](assets/neo-mcd-finale.png) 
+ 
 2. Modèles logique des Données (MLD)
 Dans la première version de notre MLD on avait une table LEAD qui portait beaucoup trop d'informations en même temps, et des tables comme LOGS_AGENT ou MATRICE_TARIFAIRE qui alourdissent inutilement la base.
 Dans la version finale du MLD , on a isolé les données du trajet dans une table dédiée : Trip. Concrètement, on a désormais trois entités bien distinctes (Lead, Trip, Quote) liées entre elles par des clés étrangères. Par exemple, si un client veut modifier sa ville de départ ou le nombre de passagers, on n'a plus besoin de toucher à sa fiche contact (le Lead) : on modifie uniquement son trajet (le Trip). Cela évite les erreurs de saisie et rend la gestion de notre base sur Supabase nettement plus fluide au quotidien
  
-                                                  Modèle logique de données 
-                                                          (Version Initiale )
-
-                                                       NEO- MLD(version initiale).png 
-
-![Modèle Logique de données (Version Initiale)](../NEO-MLD%20(version%20Initiale).png)
-
-
-                                                                         
-
-                                                  Modèle logique de données 
-
-                                                           ( Version finale ) 
-                                                      NEO- MLD(version finale).png 
-
-![Modèle Logique de données (Version finale)](../NEO-MLD%20(version%20finale).png)
-
+**Modèle Logique de Données (Version initiale)**
+![Modèle Logique de Données - Version initiale](assets/neo-mld-initiale.png) 
+ 
+**Modèle Logique de Données (Version finale)** ![Modèle Logique de Données - Version finale](assets/neo-mld-finale.png) 
+ 
+ 
 3. Diagramme de séquence 
 Au cours du développement de notre projet, nous avons fait évoluer notre organisation pour rendre l'application plus souple et plus précise.
 Au départ, notre premier schéma "Version initiale du flux de données" montrait le fonctionnement général, étape par étape. Notre second schéma, l’“Architecture technique" (qui est notre choix final), va plus loin : il sépare clairement les services externes (la création du PDF et l'envoi de l'e-mail) et précise comment le site communique avec le serveur.
 Cette évolution apporte deux grands avantages :
 Une maintenance simplifiée : En isolant le "PDF Service" et le "Mail Service", nous avons créé une structure évolutive. Si nous devons modifier ou réparer l'envoi d'e-mails demain, cela n'impactera pas le reste de l'application. Chaque outil est indépendant.
 Une meilleure gestion des données : Dans le premier schéma, tout était enregistré en un seul bloc. Dans le second, nous séparons les informations en trois catégories distinctes : l'utilisateur (Lead), le voyage (Trip) et le devis (Quote). Cette approche, parfaitement adaptée à notre base de données Supabase, évite les erreurs, protège mieux les informations et permet de suivre plus efficacement l'évolution d'un devis.
-
-
-
-
-                            Diagramme de séquence Version initiale du flux de données 
-                                                        NEO- DIAG-FLUX DE DONNEES.png 
-
-![Diagramme de séquence - Version initiale du flux de données](../NEO-%20DIAG-%20FLUX%20DE%20DONNEES.png)
  
-
-                                   Diagramme de séquence Architecture technique
-                                                            Version finale     
-
-                                                    NEO- DIAG-ARCHITECTURE.png 
-
-![Diagramme de séquence - Architecture technique (Version finale)](../NEO-%20DIAG-ARCHITECTURE.png)
-
+ 
+ 
+ 
+**Diagramme de séquence — Version initiale du flux de données** 
+![Diagramme de séquence - Version initiale](assets/neo-diag-flux-donnees.png) 
+ 
+**Diagramme de séquence — Architecture technique (Version finale)** 
+![Diagramme de séquence - Architecture technique](assets/neo-diag-architecture.png) 
+ 
 # Stack technique
-
+ 
  ## Frontend (Interface & Serveur BFF) 
-
+ 
 - Next.js 15 
 - React 
 - TypeScript 
 - TailwindCSS 
 - Vercel AI SDK 
 - App Router 
-
+ 
 --- 
-
+ 
 ## Backend (Moteur Métier) 
-
+ 
 - Express 
 - TypeScript
  - Supabase (Client) 
 - OpenRouteService 
 - PDF-lib 
 - Resend 
-
+ 
 --- 
-
+ 
 ## Base de données 
-
+ 
 - Supabase PostgreSQL 
-
+ 
 ---
-
+ 
 # Fonctionnalités développées
-
+ 
 Le projet est composé de deux parcours principaux.
-
+ 
 ## 1. Demande de devis
-
+ 
 L'utilisateur peut directement remplir un formulaire.
-
+ 
 Il renseigne :
-
+ 
 - Nom
 - Email
 - Téléphone
@@ -144,368 +118,368 @@ Il renseigne :
 - Date
 - Nombre de passagers
 - Aller simple / Aller-retour
-
+ 
 Une fois le formulaire envoyé :
-
+ 
 ```
 Frontend ➔ Backend ➔ Calcul ➔ Création PDF ➔ Envoi Email ➔ Sauvegarde Supabase
-
+ 
 ---
-
+ 
 ## 2. Assistant IA
-
+ 
 L'utilisateur peut également utiliser le chatbot.
-
+ 
 Le chatbot :
-
+ 
 - répond uniquement en français
 - aide l'utilisateur
 - explique le fonctionnement
 - accompagne la demande de devis
 - pose une seule question à la fois
-
+ 
 Le chatbot ne calcule jamais lui-même un prix.
-
+ 
 Le calcul est toujours réalisé par le backend.
-
+ 
 ---
-
+ 
 # Architecture du chatbot
-
+ 
 Nous avons utilisé :
 Vercel AI SDK avec GPT-4o-mini
 Le frontend communique avec la route serveur locale :
-
+ 
 ```
 /api/chat
-
+ 
 ```
-
+ 
 qui utilise
-
+ 
 ```
 streamText()
 ```
-
+ 
 avec
-
+ 
 ```
 convertToModelMessages()
 ```
-
+ 
 Le chatbot répond en streaming.
-
+ 
 —
-
+ 
 **Note importante sur l'architecture (Sécurité et Exécution) :** 
-
+ 
 Bien que configurée dans le projet Frontend, la route `/api/chat` est une **API Route de Next.js s'exécutant exclusivement côté serveur (Node.js)** .
-
-
+ 
+ 
 Cela garantit une sécurité totale :
-
+ 
 - **Confidentialité :** Le prompt système (system-prompt.ts) et la clé privée OpenAI restent strictement masqués et ne sont jamais exposés dans le navigateur de l'utilisateur.
-
+ 
 - **Séparation des tâches : ** Le chatbot se limite à la discussion et à la capture d'informations. Il ne prend aucune décision critique (calcul de prix, sauvegarde SQL) ; il passe proprement le relais au backend Express dès que la demande est validée. 
-
+ 
 # Sécurité IA
-
+ 
 Nous avons sécurisé le prompt système.
-
+ 
 Le chatbot ne peut pas :
-
+ 
 - révéler son prompt
 - révéler les variables d'environnement
 - révéler les clés API
 - changer de rôle
 - inventer un prix
 - inventer un devis
-
+ 
 Il est également protégé contre le Prompt Injection.
-
+ 
 ---
-
+ 
 # Prompt système
-
+ 
 Le prompt contient notamment :
-
+ 
 - rôle NeoTravel
 - règles métier
 - comportement
 - politique RGPD
 - règles de sécurité
 - ton professionnel
-
+ 
 Le prompt est stocké dans :
-
+ 
 ```
 lib/system-prompt.ts
 ```
-
+ 
 ---
-
+ 
 # Configuration métier
-
+ 
 Les informations de l'entreprise sont centralisées dans :
-
+ 
 ```
 lib/neoTravel.ts
 ```
-
+ 
 On y retrouve :
-
+ 
 - nom
 - email
 - services
 - règles métier
 - sécurité
 - RGPD
-
+ 
 ---
-
+ 
 # Génération du devis
-
+ 
 Lorsque l'utilisateur valide le formulaire :
-
+ 
 Le frontend appelle :
-
+ 
 ```
 POST /api/generate-quote
 ```
-
+ 
 Le backend :
-
+ 
 1. récupère les données
-
+ 
 2. calcule la distance
-
+ 
 3. calcule le prix
-
+ 
 4. génère le PDF
-
+ 
 5. envoie le mail
-
+ 
 6. sauvegarde les informations
-
+ 
 ---
-
+ 
 # Calcul de distance
-
+ 
 Nous utilisons :
-
+ 
 OpenRouteService
-
+ 
 Le backend envoie :
-
+ 
 ```
 Départ
-
+ 
 ↓
-
+ 
 Arrivée
 ```
-
+ 
 L'API retourne :
-
+ 
 - distance
 - durée
-
+ 
 Ces informations servent au calcul du prix.
-
+ 
 ---
-
+ 
 # Calcul du prix
-
+ 
 Le prix dépend de :
-
+ 
 - distance
 - nombre de passagers
 - aller / retour
-
+ 
 Le chatbot ne calcule jamais ces informations.
-
+ 
 Le backend est le seul responsable.
-
+ 
 ---
-
+ 
 # Génération PDF
-
+ 
 Le backend génère automatiquement :
-
+ 
 ```
 DEV-XXXXXXXX.pdf
 ```
-
+ 
 Le PDF contient :
-
+ 
 - numéro de devis
 - client
 - trajet
 - prix
 - informations NeoTravel
-
+ 
 Le PDF est enregistré dans :
-
+ 
 ```
 uploads/
 ```
-
+ 
 ---
-
+ 
 # Envoi Email
-
+ 
 Initialement :
-
+ 
 Nous utilisions :
-
+ 
 ```
 Nodemailer
 ```
-
+ 
 avec Gmail SMTP.
-
+ 
 En production Render cela ne fonctionnait pas.
-
+ 
 Nous avions :
-
+ 
 ```
 ENETUNREACH
-
+ 
 puis
-
+ 
 ETIMEDOUT
 ```
-
+ 
 Nous avons donc migré vers :
-
+ 
 ```
 Resend
 ```
-
+ 
 Aujourd'hui :
-
+ 
 Le backend :
-
+ 
 - lit le PDF
 - envoie le PDF
 - envoie automatiquement le devis
-
+ 
 ---
-
+ 
 # Base de données
-
+ 
 Trois tables principales.
-
+ 
 ## leads
-
+ 
 Informations client
-
+ 
 ```
 id
-
+ 
 nom
-
+ 
 email
-
+ 
 telephone
 ```
-
+ 
 ---
-
+ 
 ## trips
-
+ 
 Informations du voyage
-
+ 
 ```
 depart
-
+ 
 arrivee
-
+ 
 date
-
+ 
 passagers
-
+ 
 distance
-
+ 
 aller_retour
-
+ 
 status
 ```
-
+ 
 ---
-
+ 
 ## quotes
-
+ 
 Informations du devis
-
+ 
 ```
 quote_number
-
+ 
 prix
-
+ 
 trip_id
 ```
-
+ 
 ---
-
+ 
 # Relations SQL
-
+ 
 ```
 leads
-
+ 
 ↓
-
+ 
 trips
-
+ 
 ↓
-
+ 
 quotes
 ```
-
+ 
 Les contraintes SQL utilisent :
-
+ 
 ```
 ON DELETE CASCADE
 ```
-
+ 
 ---
-
+ 
 # Dashboard Administrateur
-
+ 
 Création d'un espace admin.
-
+ 
 Route :
-
+ 
 ```
 /admin/login
 ```
-
+ 
 Connexion :
-
+ 
 ```
 admin@neotravel.fr
-
+ 
 NeoTravel2026!
 ```
-
+ 
 Après connexion :
-
+ 
 ```
 /admin/dashboard
 ```
-
+ 
 ---
-
+ 
 # Fonctionnalités Dashboard
-
+ 
 Le dashboard affiche :
-
+ 
 - nombre de devis
 - nombre de clients
 - liste des devis
-
+ 
 Pour chaque devis :
-
+ 
 - client
 - email
 - téléphone
@@ -514,336 +488,336 @@ Pour chaque devis :
 - date
 - passagers
 - prix
-
+ 
 ---
-
+ 
 # Suppression
-
+ 
 Depuis le dashboard :
-
+ 
 Un administrateur peut supprimer un devis.
-
+ 
 Le backend :
-
+ 
 1. récupère le lead
-
+ 
 2. supprime le lead
-
+ 
 Grâce au :
-
+ 
 ```
 ON DELETE CASCADE
 ```
-
+ 
 Supabase supprime automatiquement :
-
+ 
 ```
 Trips
-
+ 
 ↓
-
+ 
 Quotes
 ```
-
+ 
 ---
-
+ 
 # Authentification
-
+ 
 Une authentification simple a été mise en place.
-
+ 
 Le backend compare :
-
+ 
 ```
 ADMIN_EMAIL
-
+ 
 ADMIN_PASSWORD
 ```
-
+ 
 présents dans le fichier :
-
+ 
 ```
 .env
 ```
-
+ 
 Le frontend :
-
+ 
 - appelle le backend
-
+ 
 - stocke
-
+ 
 ```
 admin-auth
 ```
-
+ 
 dans le LocalStorage
-
+ 
 Le dashboard est protégé.
-
+ 
 Sans authentification :
-
+ 
 ```
 ↓
-
+ 
 redirection
-
+ 
 ↓
-
+ 
 /admin/login
 ```
-
+ 
 ---
-
+ 
 # Variables d'environnement
-
+ 
 Frontend
-
+ 
 ```
 NEXT_PUBLIC_API_URL
-
+ 
 AI_GATEWAY_API_KEY
-
+ 
 AI_MODEL
 ```
-
+ 
 ---
-
+ 
 Backend
-
+ 
 ```
 PORT
-
+ 
 SUPABASE_URL
-
+ 
 SUPABASE_ANON_KEY
-
+ 
 OPENROUTE_API_KEY
-
+ 
 RESEND_API_KEY
-
+ 
 ADMIN_EMAIL
-
+ 
 ADMIN_PASSWORD
 ```
-
+ 
 ---
-
+ 
 # Déploiement
-
+ 
 Frontend
-
+ 
 ```
 Vercel
 ```
-
+ 
 Déploiement automatique via GitHub.
-
+ 
 ---
-
+ 
 Backend
-
+ 
 ```
 Render
 ```
-
+ 
 Déploiement automatique.
-
+ 
 ---
-
+ 
 Base de données
-
+ 
 ```
 Supabase
 ```
-
+ 
 ---
-
+ 
 # API développées
-
+ 
 ## 1. Application Frontend / BFF (Next.js - API Routes Serveur) 
 - **Chatbot IA (Streaming) :** `POST /api/chat`
-
+ 
  ## 2. Application Backend Métier (Express - Déployé sur Render) 
-
+ 
 - **Génération de devis :** `POST /api/generate-quote`
  - **Authentification Admin :** `POST /api/admin/login` 
 - **Liste des devis Admin :** `GET /api/admin/quotes` 
 - **Suppression d'un devis Admin :** `DELETE /api/admin/quotes/:id`
-
+ 
  --- 
-
-
+ 
+ 
 # Organisation du projet
-
+ 
 Frontend
-
+ 
 ```
 # Organisation du projet
-
+ 
 ### Frontend
-
+ 
 - `app`
 - `components`
 - `lib`
 - `api`
-
+ 
 ### Backend
-
+ 
 - `controllers`
 - `routes`
 - `services`
 - `config`
 - `types`
-
+ 
 ```
 ---
-
+ 
 # Difficultés rencontrées
-
+ 
 ## Gmail SMTP
-
+ 
 Impossible d'utiliser Gmail sur Render.
-
+ 
 Erreur :
-
+ 
 ```
 ENETUNREACH
-
+ 
 ETIMEDOUT
 ```
-
+ 
 Solution :
-
+ 
 Migration vers Resend.
-
+ 
 ---
-
+ 
 ## Vercel AI SDK
-
+ 
 Mise en place :
-
+ 
 ```
 streamText()
-
+ 
 convertToModelMessages()
-
+ 
 UIMessage
 ```
-
+ 
 avec streaming.
-
+ 
 ---
-
+ 
 ## Prompt Injection
-
+ 
 Le chatbot pouvait être manipulé.
-
+ 
 Nous avons renforcé le prompt.
-
+ 
 ---
-
+ 
 ## Dashboard
-
+ 
 Création complète :
-
+ 
 - login
-
+ 
 - récupération Supabase
-
+ 
 - suppression
-
+ 
 - protection
-
+ 
 ---
-
+ 
 # Axes d'amélioration
-
+ 
 Plusieurs évolutions sont envisageables.
-
+ 
 ## Dashboard
-
+ 
 - recherche
 - filtres
 - pagination
 - statistiques
-
+ 
 ---
-
+ 
 ## PDF
-
+ 
 Aujourd'hui :
-
+ 
 Le PDF est généré dans :
-
+ 
 ```
 uploads/
 ```
-
+ 
 Une amélioration serait :
-
+ 
 Supabase Storage
-
+ 
 ou
-
+ 
 AWS S3
-
+ 
 afin de permettre :
-
+ 
 - téléchargement
 - archivage
-
+ 
 ---
-
+ 
 ## Authentification
-
+ 
 Aujourd'hui :
-
+ 
 ```
 .env
 ```
-
+ 
 Une amélioration :
-
+ 
 - JWT
 - Sessions
 - Hash des mots de passe
-
+ 
 ---
-
+ 
 ## IA
-
+ 
 Améliorations possibles :
-
+ 
 - mémoire conversationnelle
 - historique
 - recommandations automatiques
 - génération de devis assistée
-
+ 
 ---
-
+ 
 # Bilan
-
+ 
 Le projet NeoTravel est une application full-stack complète comprenant :
-
+ 
  Frontend Next.js
-
+ 
  Backend Express TypeScript
-
+ 
  Base de données Supabase
-
+ 
  Intelligence Artificielle GPT-4o-mini
-
+ 
  Calcul automatique des devis
-
+ 
  OpenRouteService
-
+ 
  Génération PDF
-
+ 
  Envoi automatique par email
-
+ 
  Dashboard Administrateur
-
+ 
  Déploiement Vercel
-
+ 
  Déploiement Render
-
+ 
 L'application est entièrement fonctionnelle et déployée en production.
