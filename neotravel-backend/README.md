@@ -1,6 +1,8 @@
-# 🚍 NeoTravel Backend
+#  NeoTravel Backend
 
 Backend REST développé avec **Node.js**, **Express** et **TypeScript** permettant de générer automatiquement des devis de transport en autocar.
+
+Le README du backend décrit le fonctionnement de l’API, tandis que le README situé à la racine présente l’ensemble du projet et explique son déploiement.
 
 ---
 
@@ -115,3 +117,9 @@ Le projet est prêt à être connecté au frontend.
 # Équipe
 
 Projet réalisé dans le cadre de NeoTravel.
+
+Le chef de projet (organisation etc.) = Julie
+L'architecte + développeur = Aidan
+Le responsable qualité (sécurité, conformité) = Emma
+Le UX/UI (parcours clients, interface etc.) = Angèle
+L'automatisation et IA = Alexandre 
