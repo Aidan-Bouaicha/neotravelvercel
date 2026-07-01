@@ -1,0 +1,358 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+
+import QuoteModal from "@/components/QuoteModal";
+
+type QuoteFieldKey =
+  | "nom"
+  | "email"
+  | "telephone"
+  | "depart"
+  | "arrivee"
+  | "date_trajet"
+  | "nb_passagers"
+  | "aller_retour";
+
+type QuoteData = {
+  nom: string;
+  email: string;
+  telephone: string;
+  depart: string;
+  arrivee: string;
+  date_trajet: string;
+  nb_passagers: number;
+  aller_retour: boolean;
+};
+
+type QuoteMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+};
+
+type QuoteState = "idle" | "collecting" | "submitting" | "success" | "error";
+
+const INITIAL_QUOTE_DATA: QuoteData = {
+  nom: "",
+  email: "",
+  telephone: "",
+  depart: "",
+  arrivee: "",
+  date_trajet: "",
+  nb_passagers: 1,
+  aller_retour: false,
+};
+
+const QUOTE_FIELDS: Array<{ key: QuoteFieldKey; prompt: string }> = [
+  { key: "nom", prompt: "Quel est votre nom ?" },
+  { key: "email", prompt: "Quelle est votre adresse email ?" },
+  { key: "telephone", prompt: "Quel est votre numéro de téléphone ?" },
+  { key: "depart", prompt: "Quelle est la ville de départ ?" },
+  { key: "arrivee", prompt: "Quelle est la destination ?" },
+  { key: "date_trajet", prompt: "Quelle est la date du voyage ?" },
+  { key: "nb_passagers", prompt: "Combien de passagers voyagent ?" },
+  {
+    key: "aller_retour",
+    prompt: "S'agit-il d'un aller-retour ? Répondez par oui ou par non.",
+  },
+];
+
+function looksLikeQuoteRequest(text: string) {
+  const lower = text.toLowerCase();
+  return /devis|quote|prix|budget|demander un devis/i.test(lower);
+}
+
+function createMessageId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export default function Chatbot() {
+  const [input, setInput] = useState("");
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+
+  const [quoteState, setQuoteState] = useState<QuoteState>("idle");
+  const [quoteStep, setQuoteStep] = useState(0);
+  const [quoteData, setQuoteData] = useState<QuoteData>(INITIAL_QUOTE_DATA);
+  const [quoteMessages, setQuoteMessages] = useState<QuoteMessage[]>([]);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+  });
+
+  const isQuoteFlowActive = quoteState === "collecting" || quoteState === "submitting";
+
+  const visibleMessages = isQuoteFlowActive
+    ? quoteMessages
+    : messages.map((message) => ({
+        id: message.id,
+        role: message.role as "user" | "assistant",
+        text: message.parts
+          .filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join(""),
+      }));
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
+
+    if (isQuoteFlowActive) {
+      await handleQuoteAnswer(trimmedInput);
+      setInput("");
+      return;
+    }
+
+    if (looksLikeQuoteRequest(trimmedInput)) {
+      startQuoteFlow();
+      setInput("");
+      return;
+    }
+
+    await sendMessage({
+      parts: [{ type: "text", text: trimmedInput }],
+    });
+
+    setInput("");
+  }
+
+  function startQuoteFlow() {
+    setQuoteState("collecting");
+    setQuoteStep(0);
+    setQuoteData(INITIAL_QUOTE_DATA);
+    setQuoteError(null);
+    setQuoteMessages([
+      {
+        id: createMessageId(),
+        role: "assistant",
+        text: "Je vais vous aider à préparer votre devis. Quel est votre nom ?",
+      },
+    ]);
+  }
+
+  async function handleQuoteAnswer(value: string) {
+    const currentField = QUOTE_FIELDS[quoteStep];
+    if (!currentField) return;
+
+    const lowerValue = value.toLowerCase().trim();
+    let normalizedValue: string | number | boolean | null = null;
+
+    switch (currentField.key) {
+      case "nom":
+      case "email":
+      case "telephone":
+      case "depart":
+      case "arrivee":
+      case "date_trajet":
+        if (!value.trim()) {
+          setQuoteMessages((prev) => [
+            ...prev,
+            {
+              id: createMessageId(),
+              role: "assistant",
+              text: "Je n’ai pas reçu de réponse claire. Merci de répondre à la question précédente.",
+            },
+          ]);
+          return;
+        }
+        normalizedValue = value.trim();
+        break;
+
+      case "nb_passagers": {
+        const parsed = Number(value);
+        if (!Number.isInteger(parsed) || parsed < 1) {
+          setQuoteMessages((prev) => [
+            ...prev,
+            {
+              id: createMessageId(),
+              role: "assistant",
+              text: "Merci d’indiquer un nombre de passagers valide.",
+            },
+          ]);
+          return;
+        }
+        normalizedValue = parsed;
+        break;
+      }
+
+      case "aller_retour": {
+        if (/^(oui|o|yes|y|1|true)$/.test(lowerValue)) {
+          normalizedValue = true;
+        } else if (/^(non|n|no|0|false)$/.test(lowerValue)) {
+          normalizedValue = false;
+        } else {
+          setQuoteMessages((prev) => [
+            ...prev,
+            {
+              id: createMessageId(),
+              role: "assistant",
+              text: "Merci de répondre par oui ou par non.",
+            },
+          ]);
+          return;
+        }
+        break;
+      }
+    }
+
+    const updatedData = {
+      ...quoteData,
+      [currentField.key]: normalizedValue,
+    } as QuoteData;
+
+    setQuoteData(updatedData);
+    setQuoteMessages((prev) => [
+      ...prev,
+      { id: createMessageId(), role: "user", text: value },
+    ]);
+
+    const nextStep = quoteStep + 1;
+    if (nextStep >= QUOTE_FIELDS.length) {
+      await submitQuote(updatedData);
+      return;
+    }
+
+    setQuoteStep(nextStep);
+    const nextField = QUOTE_FIELDS[nextStep];
+    setQuoteMessages((prev) => [
+      ...prev,
+      { id: createMessageId(), role: "assistant", text: nextField.prompt },
+    ]);
+  }
+
+  async function submitQuote(data: QuoteData) {
+    setQuoteState("submitting");
+    setQuoteMessages((prev) => [
+      ...prev,
+      {
+        id: createMessageId(),
+        role: "assistant",
+        text: "Je finalise votre demande de devis en cours...",
+      },
+    ]);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/generate-quote`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...data,
+            special_request: false,
+            special_request_comment: "",
+          }),
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || "Erreur lors de la génération du devis.");
+      }
+
+      setQuoteMessages((prev) => [
+        ...prev,
+        {
+          id: createMessageId(),
+          role: "assistant",
+          text: "Votre devis a été généré avec succès et envoyé à votre adresse email.",
+        },
+      ]);
+      setQuoteState("success");
+      setQuoteError(null);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la génération du devis.";
+
+      setQuoteMessages((prev) => [
+        ...prev,
+        {
+          id: createMessageId(),
+          role: "assistant",
+          text: `Désolé, ${message}`,
+        },
+      ]);
+      setQuoteState("error");
+      setQuoteError(message);
+    }
+  }
+
+  return (
+    <>
+      <section className="mx-auto max-w-5xl px-6 py-12">
+        <div className="rounded-2xl border bg-white p-8 shadow">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-3xl font-bold">Assistant NeoTravel</h2>
+
+            <button
+              onClick={() => setIsQuoteModalOpen(true)}
+              className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
+            >
+              📄 Demander un devis
+            </button>
+          </div>
+
+          <div className="mb-6 h-96 overflow-y-auto rounded-xl border p-4">
+            {visibleMessages.length === 0 && (
+              <p className="text-gray-500">
+                👋 Bonjour !
+                <br />
+                Je suis votre assistant NeoTravel.
+                <br />
+                Je peux répondre à vos questions et vous aider à préparer votre voyage.
+              </p>
+            )}
+
+            {visibleMessages.map((message) => (
+              <div key={message.id} className="mb-5">
+                <strong>{message.role === "user" ? "Vous" : "NeoTravel"}</strong>
+                <p>{message.text}</p>
+              </div>
+            ))}
+
+            {quoteError && quoteState === "error" && (
+              <p className="text-sm text-red-600">{quoteError}</p>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex gap-3">
+            <input
+              className="flex-1 rounded-lg border p-3"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                isQuoteFlowActive
+                  ? "Répondez à la question..."
+                  : "Posez votre question..."
+              }
+            />
+
+            <button
+              className="rounded-lg bg-blue-700 px-5 py-3 text-white hover:bg-blue-800"
+              disabled={status === "submitted" || status === "streaming" || quoteState === "submitting"}
+            >
+              Envoyer
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <QuoteModal
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+      />
+    </>
+  );
+}
